@@ -9,6 +9,7 @@ import {
     ActivityIndicator,
     Alert,
 } from 'react-native';
+import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import { Header } from '../components/Header';
 import { Card } from '../components/Card';
 import { colors, spacing, typography, borderRadius, shadows } from '../theme';
@@ -70,13 +71,13 @@ export const CommunityScreen: React.FC<CommunityScreenProps> = ({ onNavigate }) 
                                     {post.user?.avatar ? (
                                         <Image source={{ uri: post.user.avatar }} style={{ width: 44, height: 44, borderRadius: 22 }} />
                                     ) : (
-                                        <Text style={styles.avatarEmoji}>👤</Text>
+                                        <Icon name="account-circle" size={44} color={colors.textSecondary} />
                                     )}
                                 </View>
                                 <View>
                                     <Text style={styles.userName}>{post.user?.name || 'Unknown'}</Text>
                                     <View style={styles.locationRow}>
-                                        <Text style={styles.locationIcon}>📍</Text>
+                                        <Icon name="map-marker-outline" size={12} color={colors.textSecondary} style={styles.locationIcon} />
                                         <Text style={styles.locationText}>{post.location}</Text>
                                     </View>
                                 </View>
@@ -91,19 +92,19 @@ export const CommunityScreen: React.FC<CommunityScreenProps> = ({ onNavigate }) 
                         <View style={styles.actions}>
                             <View style={styles.actionRow}>
                                 <TouchableOpacity style={styles.actionButton} onPress={() => handleLike(post.id)}>
-                                    <Text style={styles.actionIcon}>❤️</Text>
+                                    <Icon name="heart-outline" size={20} color={colors.oceanDark} style={styles.actionIcon} />
                                     <Text style={styles.actionCount}>{post.likes}</Text>
                                 </TouchableOpacity>
                                 <TouchableOpacity style={styles.actionButton}>
-                                    <Text style={styles.actionIcon}>💬</Text>
+                                    <Icon name="comment-outline" size={20} color={colors.oceanDark} style={styles.actionIcon} />
                                     <Text style={styles.actionCount}>{post.comments || 0}</Text>
                                 </TouchableOpacity>
                                 <TouchableOpacity style={styles.actionButton}>
-                                    <Text style={styles.actionIcon}>🔗</Text>
+                                    <Icon name="share-variant" size={20} color={colors.oceanDark} style={styles.actionIcon} />
                                 </TouchableOpacity>
                             </View>
                             <TouchableOpacity>
-                                <Text style={styles.actionIcon}>🔖</Text>
+                                <Icon name="bookmark-outline" size={20} color={colors.oceanDark} />
                             </TouchableOpacity>
                         </View>
 
@@ -154,9 +155,6 @@ const styles = StyleSheet.create({
         justifyContent: 'center',
         marginRight: spacing.sm,
     },
-    avatarEmoji: {
-        fontSize: 24,
-    },
     userName: {
         ...typography.body,
         color: colors.oceanDark,
@@ -167,7 +165,6 @@ const styles = StyleSheet.create({
         alignItems: 'center',
     },
     locationIcon: {
-        fontSize: 12,
         marginRight: 4,
     },
     locationText: {
@@ -198,7 +195,6 @@ const styles = StyleSheet.create({
         marginRight: spacing.md,
     },
     actionIcon: {
-        fontSize: 20,
         marginRight: 4,
     },
     actionCount: {

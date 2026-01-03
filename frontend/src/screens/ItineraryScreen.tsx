@@ -7,6 +7,7 @@ import {
     TouchableOpacity,
     ActivityIndicator,
 } from 'react-native';
+import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import { Header } from '../components/Header';
 import { Button } from '../components/Button';
 import { Tag } from '../components/Tag';
@@ -32,15 +33,12 @@ export const ItineraryScreen: React.FC<ItineraryScreenProps> = ({ onNavigate, pa
 
             try {
                 // Fetch trip details and itinerary in parallel
-                // Note: getItinerary returns the days array directly or an object containing it? 
-                // Based on auth.ts/trips.ts, it returns response.data.
                 const [tripRes, itineraryRes] = await Promise.all([
                     tripService.getTripDetails(params.tripId),
                     tripService.getItinerary(params.tripId)
                 ]);
 
                 setTrip(tripRes);
-                // If itineraryRes is the array of days
                 setItinerary(Array.isArray(itineraryRes) ? itineraryRes : (itineraryRes.days || []));
             } catch (error) {
                 console.error("Fetch itinerary error", error);
@@ -96,10 +94,10 @@ export const ItineraryScreen: React.FC<ItineraryScreenProps> = ({ onNavigate, pa
                 rightAction={
                     <View style={styles.headerActions}>
                         <TouchableOpacity style={styles.headerButton}>
-                            <Text>🔗</Text>
+                            <Icon name="share-variant" size={24} color={colors.oceanBlue} />
                         </TouchableOpacity>
                         <TouchableOpacity style={styles.headerButton}>
-                            <Text>📥</Text>
+                            <Icon name="download" size={24} color={colors.oceanBlue} />
                         </TouchableOpacity>
                     </View>
                 }
@@ -107,15 +105,15 @@ export const ItineraryScreen: React.FC<ItineraryScreenProps> = ({ onNavigate, pa
 
             <View style={styles.overview}>
                 <View style={styles.overviewItem}>
-                    <Text style={styles.overviewIcon}>📍</Text>
+                    <Icon name="map-marker" size={18} color={colors.textSecondary} style={styles.overviewIcon} />
                     <Text style={styles.overviewText}>{trip.destination}</Text>
                 </View>
                 <View style={styles.overviewItem}>
-                    <Text style={styles.overviewIcon}>⏱️</Text>
+                    <Icon name="clock-outline" size={18} color={colors.textSecondary} style={styles.overviewIcon} />
                     <Text style={styles.overviewText}>{itinerary.length} Days</Text>
                 </View>
                 <View style={styles.overviewItem}>
-                    <Text style={styles.overviewIcon}>💰</Text>
+                    <Icon name="currency-usd" size={18} color={colors.textSecondary} style={styles.overviewIcon} />
                     <Text style={styles.overviewText}>${totalBudget}</Text>
                 </View>
             </View>
@@ -163,7 +161,7 @@ export const ItineraryScreen: React.FC<ItineraryScreenProps> = ({ onNavigate, pa
                                                         </View>
                                                         <Text style={styles.activityName}>{activity.name}</Text>
                                                         <View style={styles.locationRow}>
-                                                            <Text style={styles.locationIcon}>📍</Text>
+                                                            <Icon name="map-marker-outline" size={14} color={colors.textSecondary} style={{ marginRight: 4 }} />
                                                             <Text style={styles.locationText}>{activity.location}</Text>
                                                         </View>
                                                     </View>
@@ -182,7 +180,7 @@ export const ItineraryScreen: React.FC<ItineraryScreenProps> = ({ onNavigate, pa
                             {dayIndex < itinerary.length - 1 && (
                                 <View style={styles.connector}>
                                     <View style={styles.connectorCircle}>
-                                        <Text style={styles.connectorIcon}>↓</Text>
+                                        <Icon name="arrow-down" size={18} color={colors.sandDark} />
                                     </View>
                                 </View>
                             )}
@@ -384,10 +382,6 @@ const styles = StyleSheet.create({
         backgroundColor: colors.sandLight,
         alignItems: 'center',
         justifyContent: 'center',
-    },
-    connectorIcon: {
-        color: colors.sandDark,
-        fontSize: 18,
     },
     totalCard: {
         flexDirection: 'row',
