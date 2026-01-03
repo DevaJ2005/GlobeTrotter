@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
-import { StatusBar, View, Text, StyleSheet, TouchableOpacity, Platform } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
+import { StatusBar, View, Text, StyleSheet, TouchableOpacity, Platform, BackHandler } from 'react-native';
 import { colors } from './src/theme';
 
 // Screens
@@ -36,13 +37,34 @@ type Screen =
 const App = () => {
     const [currentScreen, setCurrentScreen] = useState<Screen>('login');
     const [isAuthenticated, setIsAuthenticated] = useState(false);
+    const [history, setHistory] = useState<Screen[]>([]);
 
     const handleNavigate = (screen: string) => {
         if (screen === 'dashboard' || screen === 'register') {
             setIsAuthenticated(true);
         }
+        setHistory(prev => [...prev, currentScreen]);
         setCurrentScreen(screen as Screen);
     };
+
+    const handleBack = () => {
+        if (history.length > 0) {
+            const previousScreen = history[history.length - 1];
+            setHistory(prev => prev.slice(0, -1));
+            setCurrentScreen(previousScreen);
+            return true;
+        }
+        return false;
+    };
+
+    useEffect(() => {
+        const backHandler = BackHandler.addEventListener(
+            'hardwareBackPress',
+            handleBack
+        );
+
+        return () => backHandler.remove();
+    }, [history]);
 
     const renderScreen = () => {
         const props = { onNavigate: handleNavigate };
@@ -81,11 +103,11 @@ const App = () => {
     const showBottomNav = isAuthenticated && !['login', 'register', 'createTrip', 'buildItinerary', 'myTrips', 'profile', 'itinerary'].includes(currentScreen);
 
     const navItems = [
-        { id: 'dashboard', label: 'Home', icon: '🏠' },
-        { id: 'search', label: 'Explore', icon: '🧭' },
-        { id: 'calendar', label: 'Calendar', icon: '📅' },
-        { id: 'community', label: 'Feed', icon: '👥' },
-        { id: 'analytics', label: 'Stats', icon: '📊' },
+        { id: 'dashboard', label: 'Home', icon: 'home-variant' },
+        { id: 'search', label: 'Explore', icon: 'compass-outline' },
+        { id: 'calendar', label: 'Calendar', icon: 'calendar-month' },
+        { id: 'community', label: 'Feed', icon: 'account-group' },
+        { id: 'analytics', label: 'Stats', icon: 'chart-bar' },
     ];
 
     return (
@@ -104,7 +126,12 @@ const App = () => {
                                 style={[styles.navItem, isActive && styles.navItemActive]}
                                 onPress={() => handleNavigate(item.id)}
                             >
-                                <Text style={[styles.navIcon, isActive && styles.navIconActive]}>{item.icon}</Text>
+                                <Icon
+                                    name={item.icon}
+                                    size={24}
+                                    color={isActive ? colors.oceanDark : colors.textMuted}
+                                    style={[styles.navIcon, isActive && styles.navIconActive]}
+                                />
                                 <Text style={[styles.navLabel, isActive && styles.navLabelActive]}>{item.label}</Text>
                             </TouchableOpacity>
                         );
@@ -140,7 +167,6 @@ const styles = StyleSheet.create({
         backgroundColor: colors.oceanLight,
     },
     navIcon: {
-        fontSize: 20,
         marginBottom: 4,
         opacity: 0.6,
     },

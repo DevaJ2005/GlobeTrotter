@@ -7,6 +7,7 @@ import {
     Image,
     TouchableOpacity,
 } from 'react-native';
+import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import LinearGradient from 'react-native-linear-gradient';
 import { Header } from '../components/Header';
 import { Input } from '../components/Input';
@@ -26,21 +27,21 @@ export const CreateTripScreen: React.FC<CreateTripScreenProps> = ({ onNavigate }
 
                 <View style={styles.card}>
                     <View style={styles.inputRow}>
-                        <Text style={styles.inputIcon}>📅</Text>
+                        <Icon name="calendar-range" size={20} color={colors.oceanBlue} style={styles.inputIcon} />
                         <View style={styles.inputFlex}>
                             <Input label="Start Date" placeholder="YYYY-MM-DD" />
                         </View>
                     </View>
 
                     <View style={styles.inputRow}>
-                        <Text style={styles.inputIcon}>📍</Text>
+                        <Icon name="map-marker" size={20} color={colors.sunsetOrange} style={styles.inputIcon} />
                         <View style={styles.inputFlex}>
                             <Input label="Select a Place" placeholder="Search for destinations..." />
                         </View>
                     </View>
 
                     <View style={styles.inputRow}>
-                        <Text style={styles.inputIcon}>📅</Text>
+                        <Icon name="calendar-check" size={20} color={colors.oceanBlue} style={styles.inputIcon} />
                         <View style={styles.inputFlex}>
                             <Input label="End Date" placeholder="YYYY-MM-DD" />
                         </View>
@@ -97,7 +98,6 @@ const styles = StyleSheet.create({
         alignItems: 'flex-start',
     },
     inputIcon: {
-        fontSize: 16,
         marginTop: spacing.xl,
         marginRight: spacing.sm,
     },
