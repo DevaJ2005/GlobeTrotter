@@ -16,7 +16,6 @@ env/
 .vscode/
 .idea/
 temp/
-android/
 # Node
 node_modules/
 dist/
