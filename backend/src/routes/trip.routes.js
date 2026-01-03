@@ -23,4 +23,7 @@ router.delete('/:id/sections/:sectionId', tripController.deleteSection);
 router.get('/:id/activities', tripController.getActivities);
 router.post('/:id/activities', tripController.addActivity);
 
+// Itinerary (combined view)
+router.get('/:id/itinerary', tripController.getItinerary);
+
 module.exports = router;

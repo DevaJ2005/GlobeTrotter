@@ -175,3 +175,49 @@ exports.addActivity = async (req, res) => {
         res.status(500).json({ message: 'Server error', error: error.message });
     }
 };
+
+// --- Itinerary (Combined) ---
+
+exports.getItinerary = async (req, res) => {
+    try {
+        const trip = await Trip.findOne({ where: { id: req.params.id, userId: req.user.id } });
+        if (!trip) return res.status(404).json({ message: 'Trip not found' });
+
+        const activities = await Activity.findAll({
+            where: { tripId: trip.id },
+            order: [['day', 'ASC'], ['time', 'ASC']]
+        });
+
+        // Group activities by day
+        const dayMap = {};
+        activities.forEach(activity => {
+            const dayNum = activity.day;
+            if (!dayMap[dayNum]) {
+                dayMap[dayNum] = [];
+            }
+            dayMap[dayNum].push({
+                id: activity.id,
+                title: activity.name,
+                location: activity.location,
+                startTime: activity.time,
+                endTime: null, // Can calculate based on duration if needed
+                cost: activity.cost,
+                type: activity.type,
+                duration: activity.duration
+            });
+        });
+
+        // Convert to array format
+        const days = Object.keys(dayMap).map(dayNum => ({
+            day: parseInt(dayNum),
+            activities: dayMap[dayNum]
+        }));
+
+        res.json({
+            tripId: trip.id,
+            days
+        });
+    } catch (error) {
+        res.status(500).json({ message: 'Server error', error: error.message });
+    }
+};
