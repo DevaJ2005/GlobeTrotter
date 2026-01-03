@@ -1,73 +1,141 @@
-// Mock Data
-const posts = [
-    {
-        id: 1,
-        user: { name: "Sarah Miller", avatar: "https://via.placeholder.com/50" },
-        location: "Santorini, Greece",
-        image: "https://via.placeholder.com/400",
-        caption: "Sunset views! 🌅",
-        likes: 234,
-        commentsCount: 42,
-        isLiked: false,
-        timestamp: "2026-01-02T10:00:00Z",
-        comments: [
-            { id: 101, user: "John", text: "Wow!" }
-        ]
-    },
-    {
-        id: 2,
-        user: { name: "Mike Ross", avatar: "https://via.placeholder.com/50" },
-        location: "Kyoto, Japan",
-        image: "https://via.placeholder.com/400",
-        caption: "Temple run today.",
-        likes: 120,
-        commentsCount: 10,
-        isLiked: true,
-        timestamp: "2026-01-01T15:30:00Z",
-        comments: []
-    }
-];
+const { Post, Comment, Like, User } = require('../models');
 
-exports.getFeed = (req, res) => {
-    const page = parseInt(req.query.page) || 1;
-    const limit = parseInt(req.query.limit) || 10;
-    // Pagination logic can be added, for now return all
-    res.json(posts);
-};
+exports.getFeed = async (req, res) => {
+    try {
+        const userId = req.user ? req.user.id : null;
 
-exports.likePost = (req, res) => {
-    const { id } = req.params;
-    const post = posts.find(p => p.id == id);
-    if (post) {
-        post.isLiked = !post.isLiked;
-        post.likes += post.isLiked ? 1 : -1;
-        res.json({ message: 'Success', isLiked: post.isLiked, likes: post.likes });
-    } else {
-        res.status(404).json({ message: 'Post not found' });
+        const posts = await Post.findAll({
+            include: [
+                { model: User, as: 'user', attributes: ['id', 'name', 'avatar'] },
+                { model: Like, as: 'likes' },
+                {
+                    model: Comment,
+                    as: 'comments',
+                    include: [{ model: User, as: 'user', attributes: ['id', 'name', 'avatar'] }]
+                }
+            ],
+            order: [['createdAt', 'DESC']]
+        });
+
+        const feed = posts.map(post => {
+            const p = post.toJSON();
+            return {
+                id: p.id,
+                user: p.user,
+                location: p.location,
+                image: p.image,
+                caption: p.caption,
+                likes: p.likes.length,
+                commentsCount: p.comments.length,
+                isLiked: userId ? p.likes.some(like => like.userId === userId) : false,
+                timestamp: p.createdAt,
+                comments: p.comments.slice(0, 3)
+            };
+        });
+
+        res.json(feed);
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: 'Server error', error: error.message });
     }
 };
 
-exports.getComments = (req, res) => {
-    const { id } = req.params;
-    const post = posts.find(p => p.id == id);
-    if (post) {
-        res.json(post.comments || []);
-    } else {
-        res.status(404).json({ message: 'Post not found' });
+exports.createPost = async (req, res) => {
+    try {
+        const { caption, location } = req.body;
+        const userId = req.user.id;
+
+        const image = req.file ? `${req.protocol}://${req.get('host')}/uploads/${req.file.filename}` : null;
+
+        const post = await Post.create({
+            caption,
+            location,
+            image,
+            userId
+        });
+
+        const fullPost = await Post.findByPk(post.id, {
+            include: [{ model: User, as: 'user', attributes: ['id', 'name', 'avatar'] }]
+        });
+
+        res.status(201).json(fullPost);
+    } catch (error) {
+        res.status(500).json({ message: 'Server error', error: error.message });
     }
 };
 
-exports.addComment = (req, res) => {
-    const { id } = req.params;
-    const { text } = req.body;
-    const post = posts.find(p => p.id == id);
-    if (post) {
-        const comment = { id: Date.now(), user: "Me", text };
-        post.comments = post.comments || [];
-        post.comments.push(comment);
-        post.commentsCount++;
-        res.status(201).json(comment);
-    } else {
-        res.status(404).json({ message: 'Post not found' });
+exports.likePost = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const userId = req.user.id;
+
+        const existingLike = await Like.findOne({
+            where: { postId: id, userId }
+        });
+
+        let isLiked = false;
+
+        if (existingLike) {
+            await existingLike.destroy();
+            isLiked = false;
+        } else {
+            await Like.create({ postId: id, userId });
+            isLiked = true;
+        }
+
+        const likesCount = await Like.count({ where: { postId: id } });
+
+        res.json({ message: 'Success', isLiked, likes: likesCount });
+    } catch (error) {
+        res.status(500).json({ message: 'Server error', error: error.message });
+    }
+};
+
+exports.getComments = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const comments = await Comment.findAll({
+            where: { postId: id },
+            include: [{ model: User, as: 'user', attributes: ['id', 'name', 'avatar'] }],
+            order: [['createdAt', 'ASC']]
+        });
+
+        res.json(comments.map(c => ({
+            id: c.id,
+            text: c.text,
+            user: c.user.name,
+            avatar: c.user.avatar,
+            timestamp: c.createdAt
+        })));
+    } catch (error) {
+        res.status(500).json({ message: 'Server error', error: error.message });
+    }
+};
+
+exports.addComment = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { text } = req.body;
+        const userId = req.user.id;
+
+        const comment = await Comment.create({
+            text,
+            postId: id,
+            userId
+        });
+
+        const fullComment = await Comment.findByPk(comment.id, {
+            include: [{ model: User, as: 'user', attributes: ['id', 'name', 'avatar'] }]
+        });
+
+        res.status(201).json({
+            id: fullComment.id,
+            text: fullComment.text,
+            user: fullComment.user.name,
+            avatar: fullComment.user.avatar,
+            timestamp: fullComment.createdAt
+        });
+    } catch (error) {
+        res.status(500).json({ message: 'Server error', error: error.message });
     }
 };
