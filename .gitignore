@@ -15,6 +15,7 @@ env/
 # IDE
 .vscode/
 .idea/
+temp/
 
 # Node
 node_modules/
