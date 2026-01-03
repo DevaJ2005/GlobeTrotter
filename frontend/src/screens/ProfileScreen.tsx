@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import {
     View,
     Text,
@@ -6,32 +6,92 @@ import {
     ScrollView,
     Image,
     TouchableOpacity,
+    ActivityIndicator,
 } from 'react-native';
 import { Header } from '../components/Header';
-import { Card } from '../components/Card';
 import { Tag } from '../components/Tag';
-import { mockUser, preplannedTrips, previousTrips } from '../data/mockData';
 import { colors, spacing, typography, borderRadius, shadows } from '../theme';
+import { useAuth } from '../context/AuthContext';
+import { tripService } from '../api/trips';
+import { authService } from '../api/auth';
 
 interface ProfileScreenProps {
-    onNavigate: (screen: string) => void;
+    onNavigate: (screen: string, params?: any) => void;
 }
 
 export const ProfileScreen: React.FC<ProfileScreenProps> = ({ onNavigate }) => {
+    const { user, logout } = useAuth();
+    const [profile, setProfile] = useState<any>(user);
+    const [trips, setTrips] = useState<any[]>([]);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        const fetchProfileData = async () => {
+            try {
+                // Fetch fresh profile and trips
+                const [profileRes, tripsRes] = await Promise.all([
+                    authService.getProfile(),
+                    tripService.getAllTrips()
+                ]);
+
+                setProfile(profileRes);
+                setTrips(Array.isArray(tripsRes) ? tripsRes : []);
+            } catch (error) {
+                console.error("Profile fetch error", error);
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchProfileData();
+    }, []);
+
+    const handleLogout = async () => {
+        await logout();
+        // Navigation to login handled by App.tsx effect
+    };
+
+    if (loading) {
+        return (
+            <View style={[styles.container, styles.center]}>
+                <ActivityIndicator size="large" color={colors.oceanBlue} />
+            </View>
+        );
+    }
+
+    // Derived stats
+    const upcomingCount = trips.filter((t: any) => t.status === 'Upcoming').length;
+    const completedCount = trips.filter((t: any) => t.status === 'Completed').length;
+    // Mock countries count or derive if we had that data
+    const countriesCount = profile?.stats?.countriesVisited || 0;
+
     return (
         <View style={styles.container}>
-            <Header title="My Profile" showBack onBack={() => onNavigate('dashboard')} />
+            <Header
+                title="My Profile"
+                showBack
+                onBack={() => onNavigate('dashboard')}
+                rightAction={
+                    <TouchableOpacity onPress={handleLogout}>
+                        <Text style={{ color: colors.sunsetOrange }}>Logout</Text>
+                    </TouchableOpacity>
+                }
+            />
             <ScrollView contentContainerStyle={styles.content}>
 
                 <View style={styles.profileCard}>
                     <View style={styles.profileRow}>
                         <View style={styles.avatar}>
-                            <Text style={styles.avatarIcon}>👤</Text>
+                            {profile?.avatar ? (
+                                <Image source={{ uri: profile.avatar }} style={{ width: 96, height: 96, borderRadius: 48 }} />
+                            ) : (
+                                <Text style={styles.avatarIcon}>👤</Text>
+                            )}
                         </View>
                         <View style={styles.profileInfo}>
                             <View style={styles.profileHeader}>
                                 <View>
-                                    <Text style={styles.profileName}>{mockUser.name}</Text>
+                                    <Text style={styles.profileName}>{profile?.name || user?.name}</Text>
                                     <Text style={styles.profileRole}>Travel Enthusiast</Text>
                                 </View>
                                 <TouchableOpacity style={styles.editButton}>
@@ -41,15 +101,15 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({ onNavigate }) => {
                             <View style={styles.contactInfo}>
                                 <View style={styles.contactRow}>
                                     <Text style={styles.contactIcon}>✉️</Text>
-                                    <Text style={styles.contactText}>{mockUser.email}</Text>
+                                    <Text style={styles.contactText}>{profile?.email || user?.email}</Text>
                                 </View>
                                 <View style={styles.contactRow}>
                                     <Text style={styles.contactIcon}>📞</Text>
-                                    <Text style={styles.contactText}>{mockUser.phone}</Text>
+                                    <Text style={styles.contactText}>{profile?.phone || 'Add phone'}</Text>
                                 </View>
                                 <View style={styles.contactRow}>
                                     <Text style={styles.contactIcon}>📍</Text>
-                                    <Text style={styles.contactText}>{mockUser.location}</Text>
+                                    <Text style={styles.contactText}>{profile?.location || 'Add location'}</Text>
                                 </View>
                             </View>
                         </View>
@@ -58,15 +118,15 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({ onNavigate }) => {
 
                     <View style={styles.statsRow}>
                         <View style={styles.statItem}>
-                            <Text style={[styles.statValue, { color: colors.oceanBlue }]}>{mockUser.tripsCompleted}</Text>
+                            <Text style={[styles.statValue, { color: colors.oceanBlue }]}>{completedCount}</Text>
                             <Text style={styles.statLabel}>Trips Completed</Text>
                         </View>
                         <View style={styles.statItem}>
-                            <Text style={[styles.statValue, { color: colors.sunsetOrange }]}>{mockUser.countriesVisited}</Text>
+                            <Text style={[styles.statValue, { color: colors.sunsetOrange }]}>{countriesCount}</Text>
                             <Text style={styles.statLabel}>Countries Visited</Text>
                         </View>
                         <View style={styles.statItem}>
-                            <Text style={[styles.statValue, { color: colors.sand }]}>{mockUser.upcomingTrips}</Text>
+                            <Text style={[styles.statValue, { color: colors.sand }]}>{upcomingCount}</Text>
                             <Text style={styles.statLabel}>Upcoming Trips</Text>
                         </View>
                     </View>
@@ -74,9 +134,9 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({ onNavigate }) => {
 
 
                 <View style={styles.section}>
-                    <Text style={styles.sectionTitle}>Preplanned Trips</Text>
+                    <Text style={styles.sectionTitle}>Planning</Text>
                     <View style={styles.grid}>
-                        {preplannedTrips.map((trip) => (
+                        {trips.filter((t: any) => t.status === 'Planning').map((trip: any) => (
                             <TouchableOpacity
                                 key={trip.id}
                                 style={styles.miniCard}
@@ -90,23 +150,26 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({ onNavigate }) => {
                                 </View>
                             </TouchableOpacity>
                         ))}
+                        {trips.filter((t: any) => t.status === 'Planning').length === 0 && (
+                            <Text style={{ color: colors.textSecondary }}>No trips in planning.</Text>
+                        )}
                     </View>
                 </View>
 
 
                 <View style={styles.section}>
                     <View style={styles.sectionHeader}>
-                        <Text style={styles.sectionTitle}>Previous Trips</Text>
+                        <Text style={styles.sectionTitle}>History</Text>
                         <TouchableOpacity onPress={() => onNavigate('myTrips')}>
                             <Text style={styles.sectionLink}>View All</Text>
                         </TouchableOpacity>
                     </View>
                     <View style={styles.grid}>
-                        {previousTrips.slice(0, 3).map((trip) => (
+                        {trips.filter((t: any) => t.status === 'Completed').slice(0, 3).map((trip: any) => (
                             <TouchableOpacity
                                 key={trip.id}
                                 style={styles.miniCard}
-                                onPress={() => onNavigate('itinerary')}
+                                onPress={() => onNavigate('itinerary', { tripId: trip.id })}
                             >
                                 <Image source={{ uri: trip.image }} style={styles.miniImage} />
                                 <View style={styles.miniContent}>
@@ -114,7 +177,7 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({ onNavigate }) => {
                                     <Text style={styles.miniSubtitle} numberOfLines={1}>{trip.destination}</Text>
                                     <View style={styles.dateRow}>
                                         <Text style={styles.dateIcon}>📅</Text>
-                                        <Text style={styles.dateText}>{trip.dates}</Text>
+                                        <Text style={styles.dateText}>{trip.startDate}</Text>
                                     </View>
                                 </View>
                             </TouchableOpacity>
@@ -130,6 +193,10 @@ const styles = StyleSheet.create({
     container: {
         flex: 1,
         backgroundColor: colors.travelBg,
+    },
+    center: {
+        justifyContent: 'center',
+        alignItems: 'center',
     },
     content: {
         paddingBottom: spacing.xxl * 2,

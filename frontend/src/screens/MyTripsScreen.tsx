@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
     View,
     Text,
@@ -6,21 +6,20 @@ import {
     ScrollView,
     Image,
     TouchableOpacity,
+    ActivityIndicator,
 } from 'react-native';
 import LinearGradient from 'react-native-linear-gradient';
 import { Header } from '../components/Header';
-import { Card } from '../components/Card';
-import { Tag } from '../components/Tag';
-import { ongoingTrips, upcomingTrips, completedTrips, Trip } from '../data/mockData';
 import { colors, spacing, typography, borderRadius, shadows } from '../theme';
+import { tripService } from '../api/trips';
 
 interface MyTripsScreenProps {
-    onNavigate: (screen: string) => void;
+    onNavigate: (screen: string, params?: any) => void;
 }
 
-type TabType = 'ongoing' | 'upcoming' | 'completed';
+type TabType = 'ongoing' | 'upcoming' | 'completed' | 'planning';
 
-const TripCard: React.FC<{ trip: Trip; onPress: () => void }> = ({ trip, onPress }) => (
+const TripCard: React.FC<{ trip: any; onPress: () => void }> = ({ trip, onPress }) => (
     <TouchableOpacity style={styles.tripCard} onPress={onPress}>
         <View style={styles.tripImageContainer}>
             <Image source={{ uri: trip.image }} style={styles.tripImage} />
@@ -34,48 +33,72 @@ const TripCard: React.FC<{ trip: Trip; onPress: () => void }> = ({ trip, onPress
             </View>
             <View style={styles.tripRow}>
                 <Text style={styles.tripIcon}>📅</Text>
-                <Text style={styles.tripText}>{trip.dates}</Text>
-            </View>
-            <View style={styles.tripRow}>
-                <Text style={styles.tripIcon}>💰</Text>
-                <Text style={styles.tripText}>{trip.budget}</Text>
+                <Text style={styles.tripText}>{trip.startDate} - {trip.endDate}</Text>
             </View>
             <View style={styles.tripDivider} />
-            <Text style={styles.tripOverview} numberOfLines={3}>{trip.overview}</Text>
+            <Text style={styles.tripOverview} numberOfLines={3}>{trip.description || 'No description available.'}</Text>
         </View>
     </TouchableOpacity>
 );
 
 export const MyTripsScreen: React.FC<MyTripsScreenProps> = ({ onNavigate }) => {
-    const [activeTab, setActiveTab] = useState<TabType>('ongoing');
+    const [activeTab, setActiveTab] = useState<TabType>('planning');
+    const [trips, setTrips] = useState<any[]>([]);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        const fetchTrips = async () => {
+            try {
+                const data = await tripService.getAllTrips();
+                setTrips(Array.isArray(data) ? data : []);
+            } catch (error) {
+                console.error("Fetch trips error", error);
+            } finally {
+                setLoading(false);
+            }
+        };
+        fetchTrips();
+    }, []);
 
     const tabs: { key: TabType; label: string }[] = [
-        { key: 'ongoing', label: 'Ongoing' },
+        { key: 'planning', label: 'Planning' },
         { key: 'upcoming', label: 'Upcoming' },
-        { key: 'completed', label: 'Completed' },
+        { key: 'ongoing', label: 'Ongoing' },
+        { key: 'completed', label: 'History' },
     ];
 
     const getTrips = () => {
-        switch (activeTab) {
-            case 'ongoing': return ongoingTrips;
-            case 'upcoming': return upcomingTrips;
-            case 'completed': return completedTrips;
-            default: return [];
+        // Filter based on status. Note: Backend statuses might differ in casing
+        const targetStatus = activeTab.charAt(0).toUpperCase() + activeTab.slice(1);
+        if (activeTab === 'completed') {
+            return trips.filter(t => t.status === 'Completed');
         }
+        return trips.filter(t => t.status === targetStatus);
     };
 
     const getTabColor = (tab: TabType): string => {
         switch (tab) {
+            case 'planning': return colors.sunsetOrange;
             case 'ongoing': return colors.oceanBlue;
-            case 'upcoming': return colors.sunsetOrange;
+            case 'upcoming': return colors.oceanLight;
             case 'completed': return colors.sand;
+            default: return colors.oceanBlue;
         }
     };
+
+    if (loading) {
+        return (
+            <View style={[styles.container, styles.center]}>
+                <ActivityIndicator size="large" color={colors.oceanBlue} />
+            </View>
+        );
+    }
+
+    const displayedTrips = getTrips();
 
     return (
         <View style={styles.container}>
             <Header title="My Trips" showBack onBack={() => onNavigate('dashboard')} />
-
 
             <View style={styles.tabContainer}>
                 {tabs.map((tab) => (
@@ -95,9 +118,21 @@ export const MyTripsScreen: React.FC<MyTripsScreenProps> = ({ onNavigate }) => {
             </View>
 
             <ScrollView contentContainerStyle={styles.content}>
-                {getTrips().map((trip) => (
-                    <TripCard key={trip.id} trip={trip} onPress={() => onNavigate('itinerary')} />
+                {displayedTrips.map((trip) => (
+                    <TripCard
+                        key={trip.id}
+                        trip={trip}
+                        onPress={() => onNavigate(activeTab === 'planning' ? 'buildItinerary' : 'itinerary', { tripId: trip.id, tripName: trip.title })}
+                    />
                 ))}
+                {displayedTrips.length === 0 && (
+                    <View style={styles.emptyState}>
+                        <Text style={styles.emptyText}>No trips found in this category.</Text>
+                        <TouchableOpacity onPress={() => onNavigate('createTrip')}>
+                            <Text style={{ color: colors.oceanBlue, marginTop: 8 }}>Plan a new trip</Text>
+                        </TouchableOpacity>
+                    </View>
+                )}
             </ScrollView>
         </View>
     );
@@ -107,6 +142,10 @@ const styles = StyleSheet.create({
     container: {
         flex: 1,
         backgroundColor: colors.travelBg,
+    },
+    center: {
+        justifyContent: 'center',
+        alignItems: 'center',
     },
     tabContainer: {
         flexDirection: 'row',
@@ -126,6 +165,7 @@ const styles = StyleSheet.create({
     tabText: {
         ...typography.body,
         color: colors.textSecondary,
+        fontSize: 12,
     },
     tabTextActive: {
         color: colors.white,
@@ -186,4 +226,11 @@ const styles = StyleSheet.create({
         ...typography.bodySmall,
         color: colors.textSecondary,
     },
+    emptyState: {
+        alignItems: 'center',
+        marginTop: spacing.xl,
+    },
+    emptyText: {
+        color: colors.textSecondary,
+    }
 });

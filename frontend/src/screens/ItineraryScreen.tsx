@@ -1,24 +1,80 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import {
     View,
     Text,
     StyleSheet,
     ScrollView,
     TouchableOpacity,
+    ActivityIndicator,
 } from 'react-native';
 import { Header } from '../components/Header';
 import { Button } from '../components/Button';
 import { Tag } from '../components/Tag';
-import { itineraryDays } from '../data/mockData';
 import { colors, spacing, typography, borderRadius, shadows } from '../theme';
+import { tripService } from '../api/trips';
 
 interface ItineraryScreenProps {
-    onNavigate: (screen: string) => void;
+    onNavigate: (screen: string, params?: any) => void;
+    params?: { tripId: number; tripName?: string };
 }
 
-export const ItineraryScreen: React.FC<ItineraryScreenProps> = ({ onNavigate }) => {
-    const totalBudget = itineraryDays.reduce(
-        (sum, day) => sum + parseInt(day.totalCost.replace('$', '')),
+export const ItineraryScreen: React.FC<ItineraryScreenProps> = ({ onNavigate, params }) => {
+    const [trip, setTrip] = useState<any>(null);
+    const [itinerary, setItinerary] = useState<any[]>([]);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        const fetchItinerary = async () => {
+            if (!params?.tripId) {
+                setLoading(false);
+                return;
+            }
+
+            try {
+                // Fetch trip details and itinerary in parallel
+                // Note: getItinerary returns the days array directly or an object containing it? 
+                // Based on auth.ts/trips.ts, it returns response.data.
+                const [tripRes, itineraryRes] = await Promise.all([
+                    tripService.getTripDetails(params.tripId),
+                    tripService.getItinerary(params.tripId)
+                ]);
+
+                setTrip(tripRes);
+                // If itineraryRes is the array of days
+                setItinerary(Array.isArray(itineraryRes) ? itineraryRes : (itineraryRes.days || []));
+            } catch (error) {
+                console.error("Fetch itinerary error", error);
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchItinerary();
+    }, [params?.tripId]);
+
+    if (loading) {
+        return (
+            <View style={[styles.container, styles.center]}>
+                <ActivityIndicator size="large" color={colors.oceanBlue} />
+            </View>
+        );
+    }
+
+    if (!trip) {
+        return (
+            <View style={[styles.container, styles.center]}>
+                <Text style={{ color: colors.textSecondary }}>Trip not found.</Text>
+                <View style={{ marginTop: spacing.md }}>
+                    <Button variant="primary" onPress={() => onNavigate('dashboard')}>
+                        Go to Dashboard
+                    </Button>
+                </View>
+            </View>
+        );
+    }
+
+    const totalBudget = itinerary.reduce(
+        (sum, day) => sum + (day.totalCost ? parseInt(String(day.totalCost).replace(/[^0-9]/g, '')) : 0),
         0
     );
 
@@ -34,7 +90,7 @@ export const ItineraryScreen: React.FC<ItineraryScreenProps> = ({ onNavigate }) 
     return (
         <View style={styles.container}>
             <Header
-                title="Trip Itinerary"
+                title={trip.title || "Trip Itinerary"}
                 showBack
                 onBack={() => onNavigate('myTrips')}
                 rightAction={
@@ -49,15 +105,14 @@ export const ItineraryScreen: React.FC<ItineraryScreenProps> = ({ onNavigate }) 
                 }
             />
 
-
             <View style={styles.overview}>
                 <View style={styles.overviewItem}>
                     <Text style={styles.overviewIcon}>📍</Text>
-                    <Text style={styles.overviewText}>Paris, France</Text>
+                    <Text style={styles.overviewText}>{trip.destination}</Text>
                 </View>
                 <View style={styles.overviewItem}>
                     <Text style={styles.overviewIcon}>⏱️</Text>
-                    <Text style={styles.overviewText}>5 Days</Text>
+                    <Text style={styles.overviewText}>{itinerary.length} Days</Text>
                 </View>
                 <View style={styles.overviewItem}>
                     <Text style={styles.overviewIcon}>💰</Text>
@@ -66,78 +121,86 @@ export const ItineraryScreen: React.FC<ItineraryScreenProps> = ({ onNavigate }) 
             </View>
 
             <ScrollView contentContainerStyle={styles.content}>
-                {itineraryDays.map((day, dayIndex) => (
-                    <View key={day.day}>
-
-                        <View style={styles.dayHeader}>
-                            <View style={styles.dayBadge}>
-                                <Text style={styles.dayBadgeText}>D{day.day}</Text>
+                {itinerary.length === 0 ? (
+                    <View style={[styles.center, { padding: spacing.xl }]}>
+                        <Text style={{ color: colors.textSecondary, marginBottom: spacing.lg }}>Itinerary is empty.</Text>
+                        <Button variant="primary" onPress={() => onNavigate('buildItinerary', { tripId: trip.id })}>
+                            Start Building
+                        </Button>
+                    </View>
+                ) : (
+                    itinerary.map((day, dayIndex) => (
+                        <View key={day.day || dayIndex}>
+                            <View style={styles.dayHeader}>
+                                <View style={styles.dayBadge}>
+                                    <Text style={styles.dayBadgeText}>D{day.day}</Text>
+                                </View>
+                                <View style={styles.dayInfo}>
+                                    <Text style={styles.dayTitle}>Day {day.day}</Text>
+                                    <Text style={styles.dayDate}>{day.date}</Text>
+                                </View>
+                                <View style={styles.dayBudget}>
+                                    <Text style={styles.dayBudgetLabel}>Daily Budget</Text>
+                                    <Text style={styles.dayBudgetValue}>${day.totalCost || 0}</Text>
+                                </View>
                             </View>
-                            <View style={styles.dayInfo}>
-                                <Text style={styles.dayTitle}>Day {day.day}</Text>
-                                <Text style={styles.dayDate}>{day.date}</Text>
-                            </View>
-                            <View style={styles.dayBudget}>
-                                <Text style={styles.dayBudgetLabel}>Daily Budget</Text>
-                                <Text style={styles.dayBudgetValue}>{day.totalCost}</Text>
-                            </View>
-                        </View>
 
-
-                        <View style={styles.timeline}>
-                            <View style={styles.timelineLine} />
-                            {day.activities.map((activity, idx) => {
-                                const typeColors = getTypeColors(activity.type);
-                                return (
-                                    <View key={idx} style={styles.activityRow}>
-                                        <View style={[styles.timelineDot, { borderColor: typeColors.bg }]} />
-                                        <View style={styles.activityCard}>
-                                            <View style={styles.activityHeader}>
-                                                <View>
-                                                    <View style={styles.activityMeta}>
-                                                        <View style={[styles.typeBadge, { backgroundColor: typeColors.bg }]}>
-                                                            <Text style={[styles.typeText, { color: typeColors.text }]}>{activity.type}</Text>
+                            <View style={styles.timeline}>
+                                <View style={styles.timelineLine} />
+                                {(day.activities || []).map((activity: any, idx: number) => {
+                                    const typeColors = getTypeColors(activity.type);
+                                    return (
+                                        <View key={idx} style={styles.activityRow}>
+                                            <View style={[styles.timelineDot, { borderColor: typeColors.bg }]} />
+                                            <View style={styles.activityCard}>
+                                                <View style={styles.activityHeader}>
+                                                    <View>
+                                                        <View style={styles.activityMeta}>
+                                                            <View style={[styles.typeBadge, { backgroundColor: typeColors.bg }]}>
+                                                                <Text style={[styles.typeText, { color: typeColors.text }]}>{activity.type}</Text>
+                                                            </View>
+                                                            <Text style={styles.activityTime}>{activity.time}</Text>
                                                         </View>
-                                                        <Text style={styles.activityTime}>{activity.time}</Text>
+                                                        <Text style={styles.activityName}>{activity.name}</Text>
+                                                        <View style={styles.locationRow}>
+                                                            <Text style={styles.locationIcon}>📍</Text>
+                                                            <Text style={styles.locationText}>{activity.location}</Text>
+                                                        </View>
                                                     </View>
-                                                    <Text style={styles.activityName}>{activity.name}</Text>
-                                                    <View style={styles.locationRow}>
-                                                        <Text style={styles.locationIcon}>📍</Text>
-                                                        <Text style={styles.locationText}>{activity.location}</Text>
+                                                    <View style={styles.activityCost}>
+                                                        <Text style={styles.costValue}>${activity.cost}</Text>
+                                                        <Text style={styles.costDuration}>{activity.duration}</Text>
                                                     </View>
-                                                </View>
-                                                <View style={styles.activityCost}>
-                                                    <Text style={styles.costValue}>{activity.cost}</Text>
-                                                    <Text style={styles.costDuration}>{activity.duration}</Text>
                                                 </View>
                                             </View>
                                         </View>
-                                    </View>
-                                );
-                            })}
-                        </View>
-
-
-                        {dayIndex < itineraryDays.length - 1 && (
-                            <View style={styles.connector}>
-                                <View style={styles.connectorCircle}>
-                                    <Text style={styles.connectorIcon}>↓</Text>
-                                </View>
+                                    );
+                                })}
                             </View>
-                        )}
-                    </View>
-                ))}
 
 
-                <View style={styles.totalCard}>
-                    <View>
-                        <Text style={styles.totalLabel}>Total Trip Budget</Text>
-                        <Text style={styles.totalValue}>${totalBudget}</Text>
+                            {dayIndex < itinerary.length - 1 && (
+                                <View style={styles.connector}>
+                                    <View style={styles.connectorCircle}>
+                                        <Text style={styles.connectorIcon}>↓</Text>
+                                    </View>
+                                </View>
+                            )}
+                        </View>
+                    )))}
+
+
+                {itinerary.length > 0 && (
+                    <View style={styles.totalCard}>
+                        <View>
+                            <Text style={styles.totalLabel}>Total Trip Budget</Text>
+                            <Text style={styles.totalValue}>${totalBudget}</Text>
+                        </View>
+                        <Button variant="sunset" onPress={() => onNavigate('buildItinerary', { tripId: trip.id })}>
+                            Edit Itinerary
+                        </Button>
                     </View>
-                    <Button variant="sunset" onPress={() => onNavigate('buildItinerary')}>
-                        Edit Itinerary
-                    </Button>
-                </View>
+                )}
             </ScrollView>
         </View>
     );
@@ -147,6 +210,11 @@ const styles = StyleSheet.create({
     container: {
         flex: 1,
         backgroundColor: colors.travelBg,
+    },
+    center: {
+        justifyContent: 'center',
+        alignItems: 'center',
+        flex: 1,
     },
     headerActions: {
         flexDirection: 'row',

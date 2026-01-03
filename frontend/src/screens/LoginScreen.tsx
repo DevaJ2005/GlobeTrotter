@@ -11,12 +11,14 @@ import {
 import { Input } from '../components/Input';
 import { Button } from '../components/Button';
 import { colors, spacing, typography, borderRadius, shadows } from '../theme';
+import { useAuth } from '../context/AuthContext';
 
 interface LoginScreenProps {
     onNavigate: (screen: string) => void;
 }
 
 export const LoginScreen: React.FC<LoginScreenProps> = ({ onNavigate }) => {
+    const { login } = useAuth();
     const [username, setUsername] = useState('');
     const [password, setPassword] = useState('');
 
@@ -55,7 +57,14 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onNavigate }) => {
                         <Button
                             variant="primary"
                             fullWidth
-                            onPress={() => onNavigate('dashboard')}
+                            onPress={async () => {
+                                try {
+                                    await login({ username, password });
+                                } catch (e) {
+                                    console.error(e);
+                                    // Error handling TODO
+                                }
+                            }}
                         >
                             Login
                         </Button>
@@ -69,7 +78,7 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onNavigate }) => {
                     </View>
                 </ScrollView>
             </KeyboardAvoidingView>
-        </View>
+        </View >
     );
 };
 
