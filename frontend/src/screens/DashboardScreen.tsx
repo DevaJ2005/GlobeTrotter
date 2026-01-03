@@ -9,6 +9,7 @@ import {
     TouchableOpacity,
     Dimensions,
 } from 'react-native';
+import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import LinearGradient from 'react-native-linear-gradient';
 import { Button } from '../components/Button';
 import { Card } from '../components/Card';
@@ -45,14 +46,14 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({ onNavigate }) 
                             style={styles.profileButton}
                             onPress={() => onNavigate('profile')}
                         >
-                            <Text style={styles.profileIcon}>👤</Text>
+                            <Icon name="account-circle" size={24} color={colors.white} />
                         </TouchableOpacity>
                     </View>
                 </View>
 
                 <View style={styles.searchContainer}>
                     <View style={styles.searchBar}>
-                        <Text style={styles.searchIcon}>🔍</Text>
+                        <Icon name="magnify" size={20} color={colors.textMuted} style={styles.searchIcon} />
                         <TextInput
                             style={styles.searchInput}
                             placeholder="Search destinations, activities..."
@@ -102,12 +103,12 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({ onNavigate }) 
                             <View style={styles.tripInfo}>
                                 <Text style={styles.tripTitle}>{trip.title}</Text>
                                 <View style={styles.tripMeta}>
-                                    <Text style={styles.tripIcon}>📅</Text>
+                                    <Icon name="calendar-blank" size={14} color={colors.textSecondary} style={styles.tripIcon} />
                                     <Text style={styles.tripDates}>{trip.dates}</Text>
                                 </View>
                                 <Tag color="sand">{trip.status}</Tag>
                             </View>
-                            <Text style={styles.chevron}>›</Text>
+                            <Icon name="chevron-right" size={24} color={colors.oceanBlue} />
                         </View>
                     </Card>
                 ))}
@@ -115,7 +116,7 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({ onNavigate }) 
 
             <View style={styles.ctaSection}>
                 <Button variant="primary" fullWidth size="lg" onPress={() => onNavigate('createTrip')}>
-                    📍 Plan New Trip
+                    <Icon name="map-plus" size={18} color={colors.white} style={{ marginRight: 8 }} /> Plan New Trip
                 </Button>
             </View>
         </ScrollView>
@@ -190,7 +191,6 @@ const styles = StyleSheet.create({
         elevation: 4,
     },
     searchIcon: {
-        fontSize: 20,
         marginRight: spacing.sm,
     },
     searchInput: {
