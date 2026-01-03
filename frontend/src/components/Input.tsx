@@ -33,8 +33,8 @@ export const Input: React.FC<InputProps> = ({
             <RNTextInput
                 style={[
                     styles.input,
-                    isFocused && styles.inputFocused,
-                    error && styles.inputError,
+                    isFocused ? styles.inputFocused : undefined,
+                    error ? styles.inputError : undefined,
                 ]}
                 value={value}
                 onChangeText={onChangeText}
