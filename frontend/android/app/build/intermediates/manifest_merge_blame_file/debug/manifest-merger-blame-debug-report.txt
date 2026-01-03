@@ -35,7 +35,11 @@
 24
 25    <application
 25-->C:\Users\zbuser\OneDrive\Desktop\projects\GlobeTrotter\frontend\android\app\src\main\AndroidManifest.xml:5:5-25:19
+<<<<<<< HEAD
 26        android:name="com.globetrotter.MainApplication"
+=======
+26        android:name="com.globetrottertemp.MainApplication"
+>>>>>>> main
 26-->C:\Users\zbuser\OneDrive\Desktop\projects\GlobeTrotter\frontend\android\app\src\main\AndroidManifest.xml:6:7-38
 27        android:allowBackup="false"
 27-->C:\Users\zbuser\OneDrive\Desktop\projects\GlobeTrotter\frontend\android\app\src\main\AndroidManifest.xml:10:7-34
@@ -55,7 +59,11 @@
 35-->C:\Users\zbuser\OneDrive\Desktop\projects\GlobeTrotter\frontend\android\app\src\main\AndroidManifest.xml:11:7-42
 36        <activity
 36-->C:\Users\zbuser\OneDrive\Desktop\projects\GlobeTrotter\frontend\android\app\src\main\AndroidManifest.xml:13:7-24:18
+<<<<<<< HEAD
 37            android:name="com.globetrotter.MainActivity"
+=======
+37            android:name="com.globetrottertemp.MainActivity"
+>>>>>>> main
 37-->C:\Users\zbuser\OneDrive\Desktop\projects\GlobeTrotter\frontend\android\app\src\main\AndroidManifest.xml:14:9-37
 38            android:configChanges="keyboard|keyboardHidden|orientation|screenLayout|screenSize|smallestScreenSize|uiMode"
 38-->C:\Users\zbuser\OneDrive\Desktop\projects\GlobeTrotter\frontend\android\app\src\main\AndroidManifest.xml:16:9-118

@@ -149,7 +149,11 @@ MERGED from [com.facebook.soloader:soloader:0.10.5] C:\Users\zbuser\.gradle\cach
 	android:name
 		ADDED from C:\Users\zbuser\OneDrive\Desktop\projects\GlobeTrotter\frontend\android\app\src\main\AndroidManifest.xml:6:7-38
 		ADDED from C:\Users\zbuser\OneDrive\Desktop\projects\GlobeTrotter\frontend\android\app\src\main\AndroidManifest.xml:6:7-38
+<<<<<<< HEAD
 activity#com.globetrotter.MainActivity
+=======
+activity#com.globetrottertemp.MainActivity
+>>>>>>> main
 ADDED from C:\Users\zbuser\OneDrive\Desktop\projects\GlobeTrotter\frontend\android\app\src\main\AndroidManifest.xml:13:7-24:18
 	android:label
 		ADDED from C:\Users\zbuser\OneDrive\Desktop\projects\GlobeTrotter\frontend\android\app\src\main\AndroidManifest.xml:15:9-41

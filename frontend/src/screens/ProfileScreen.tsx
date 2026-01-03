@@ -8,6 +8,7 @@ import {
     TouchableOpacity,
     ActivityIndicator,
 } from 'react-native';
+import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import { Header } from '../components/Header';
 import { Tag } from '../components/Tag';
 import { colors, spacing, typography, borderRadius, shadows } from '../theme';
@@ -85,7 +86,7 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({ onNavigate }) => {
                             {profile?.avatar ? (
                                 <Image source={{ uri: profile.avatar }} style={{ width: 96, height: 96, borderRadius: 48 }} />
                             ) : (
-                                <Text style={styles.avatarIcon}>👤</Text>
+                                <Icon name="account-circle" size={96} color={colors.textSecondary} />
                             )}
                         </View>
                         <View style={styles.profileInfo}>
@@ -95,20 +96,20 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({ onNavigate }) => {
                                     <Text style={styles.profileRole}>Travel Enthusiast</Text>
                                 </View>
                                 <TouchableOpacity style={styles.editButton}>
-                                    <Text style={styles.editIcon}>✏️</Text>
+                                    <Icon name="pencil-outline" size={18} color={colors.oceanBlue} />
                                 </TouchableOpacity>
                             </View>
                             <View style={styles.contactInfo}>
                                 <View style={styles.contactRow}>
-                                    <Text style={styles.contactIcon}>✉️</Text>
+                                    <Icon name="email-outline" size={14} color={colors.textSecondary} style={styles.contactIcon} />
                                     <Text style={styles.contactText}>{profile?.email || user?.email}</Text>
                                 </View>
                                 <View style={styles.contactRow}>
-                                    <Text style={styles.contactIcon}>📞</Text>
+                                    <Icon name="phone-outline" size={14} color={colors.textSecondary} style={styles.contactIcon} />
                                     <Text style={styles.contactText}>{profile?.phone || 'Add phone'}</Text>
                                 </View>
                                 <View style={styles.contactRow}>
-                                    <Text style={styles.contactIcon}>📍</Text>
+                                    <Icon name="map-marker-outline" size={14} color={colors.textSecondary} style={styles.contactIcon} />
                                     <Text style={styles.contactText}>{profile?.location || 'Add location'}</Text>
                                 </View>
                             </View>
@@ -176,7 +177,7 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({ onNavigate }) => {
                                     <Text style={styles.miniTitle} numberOfLines={1}>{trip.title}</Text>
                                     <Text style={styles.miniSubtitle} numberOfLines={1}>{trip.destination}</Text>
                                     <View style={styles.dateRow}>
-                                        <Text style={styles.dateIcon}>📅</Text>
+                                        <Icon name="calendar-blank" size={12} color={colors.textSecondary} style={styles.dateIcon} />
                                         <Text style={styles.dateText}>{trip.startDate}</Text>
                                     </View>
                                 </View>
@@ -213,12 +214,9 @@ const styles = StyleSheet.create({
         width: 96,
         height: 96,
         borderRadius: 48,
-        backgroundColor: colors.oceanBlue,
+        backgroundColor: colors.oceanLight,
         alignItems: 'center',
         justifyContent: 'center',
-    },
-    avatarIcon: {
-        fontSize: 48,
     },
     profileInfo: {
         flex: 1,
@@ -240,9 +238,6 @@ const styles = StyleSheet.create({
     editButton: {
         padding: spacing.sm,
     },
-    editIcon: {
-        fontSize: 18,
-    },
     contactInfo: {
         gap: spacing.xs,
     },
@@ -252,7 +247,6 @@ const styles = StyleSheet.create({
     },
     contactIcon: {
         marginRight: spacing.sm,
-        fontSize: 14,
     },
     contactText: {
         ...typography.bodySmall,
@@ -334,7 +328,6 @@ const styles = StyleSheet.create({
         alignItems: 'center',
     },
     dateIcon: {
-        fontSize: 10,
         marginRight: 4,
     },
     dateText: {
