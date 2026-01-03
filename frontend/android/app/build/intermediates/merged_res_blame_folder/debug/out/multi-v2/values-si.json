@@ -1,7 +1,7 @@
 {
     "logs": [
         {
-            "outputFile": "com.globetrottertemp.app-mergeDebugResources-34:/values-si/values-si.xml",
+            "outputFile": "com.globetrotter.app-mergeDebugResources-34:/values-si/values-si.xml",
             "map": [
                 {
                     "source": "C:\\Users\\zbuser\\.gradle\\caches\\transforms-3\\13659b94c66de92d98d7f8af61234b95\\transformed\\core-1.9.0\\res\\values-si\\values-si.xml",

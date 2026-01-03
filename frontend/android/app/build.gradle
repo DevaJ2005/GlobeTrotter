@@ -74,9 +74,9 @@ android {
     buildToolsVersion rootProject.ext.buildToolsVersion
     compileSdk rootProject.ext.compileSdkVersion
 
-    namespace "com.globetrottertemp"
+    namespace "com.globetrotter"
     defaultConfig {
-        applicationId "com.globetrottertemp"
+        applicationId "com.globetrotter"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
         versionCode 1
@@ -117,4 +117,3 @@ dependencies {
 }
 
 apply from: file("../../node_modules/@react-native-community/cli-platform-android/native_modules.gradle"); applyNativeModulesAppBuildGradle(project)
-apply from: "../../node_modules/react-native-vector-icons/fonts.gradle"

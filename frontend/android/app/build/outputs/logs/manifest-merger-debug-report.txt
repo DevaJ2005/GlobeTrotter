@@ -149,7 +149,11 @@ MERGED from [com.facebook.soloader:soloader:0.10.5] C:\Users\zbuser\.gradle\cach
 	android:name
 		ADDED from C:\Users\zbuser\OneDrive\Desktop\projects\GlobeTrotter\frontend\android\app\src\main\AndroidManifest.xml:6:7-38
 		ADDED from C:\Users\zbuser\OneDrive\Desktop\projects\GlobeTrotter\frontend\android\app\src\main\AndroidManifest.xml:6:7-38
+<<<<<<< HEAD
+activity#com.globetrotter.MainActivity
+=======
 activity#com.globetrottertemp.MainActivity
+>>>>>>> main
 ADDED from C:\Users\zbuser\OneDrive\Desktop\projects\GlobeTrotter\frontend\android\app\src\main\AndroidManifest.xml:13:7-24:18
 	android:label
 		ADDED from C:\Users\zbuser\OneDrive\Desktop\projects\GlobeTrotter\frontend\android\app\src\main\AndroidManifest.xml:15:9-41
@@ -377,7 +381,7 @@ ADDED from [androidx.core:core:1.9.0] C:\Users\zbuser\.gradle\caches\transforms-
 		ADDED from [androidx.core:core:1.9.0] C:\Users\zbuser\.gradle\caches\transforms-3\13659b94c66de92d98d7f8af61234b95\transformed\core-1.9.0\AndroidManifest.xml:24:9-44
 	android:name
 		ADDED from [androidx.core:core:1.9.0] C:\Users\zbuser\.gradle\caches\transforms-3\13659b94c66de92d98d7f8af61234b95\transformed\core-1.9.0\AndroidManifest.xml:23:9-81
-permission#com.globetrottertemp.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION
+permission#com.globetrotter.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION
 ADDED from [androidx.core:core:1.9.0] C:\Users\zbuser\.gradle\caches\transforms-3\13659b94c66de92d98d7f8af61234b95\transformed\core-1.9.0\AndroidManifest.xml:22:5-24:47
 	android:protectionLevel
 		ADDED from [androidx.core:core:1.9.0] C:\Users\zbuser\.gradle\caches\transforms-3\13659b94c66de92d98d7f8af61234b95\transformed\core-1.9.0\AndroidManifest.xml:24:9-44
@@ -387,7 +391,7 @@ uses-permission#${applicationId}.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION
 ADDED from [androidx.core:core:1.9.0] C:\Users\zbuser\.gradle\caches\transforms-3\13659b94c66de92d98d7f8af61234b95\transformed\core-1.9.0\AndroidManifest.xml:26:5-97
 	android:name
 		ADDED from [androidx.core:core:1.9.0] C:\Users\zbuser\.gradle\caches\transforms-3\13659b94c66de92d98d7f8af61234b95\transformed\core-1.9.0\AndroidManifest.xml:26:22-94
-uses-permission#com.globetrottertemp.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION
+uses-permission#com.globetrotter.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION
 ADDED from [androidx.core:core:1.9.0] C:\Users\zbuser\.gradle\caches\transforms-3\13659b94c66de92d98d7f8af61234b95\transformed\core-1.9.0\AndroidManifest.xml:26:5-97
 	android:name
 		ADDED from [androidx.core:core:1.9.0] C:\Users\zbuser\.gradle\caches\transforms-3\13659b94c66de92d98d7f8af61234b95\transformed\core-1.9.0\AndroidManifest.xml:26:22-94
