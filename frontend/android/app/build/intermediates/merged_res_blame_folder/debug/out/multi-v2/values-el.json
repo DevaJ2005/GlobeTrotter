@@ -1,7 +1,7 @@
 {
     "logs": [
         {
-            "outputFile": "com.globetrottertemp.app-mergeDebugResources-34:/values-el/values-el.xml",
+            "outputFile": "com.globetrotter.app-mergeDebugResources-34:/values-el/values-el.xml",
             "map": [
                 {
                     "source": "C:\\Users\\zbuser\\.gradle\\caches\\transforms-3\\0859cc2ebf96bc372b2c46ef5b293d59\\transformed\\jetified-react-android-0.73.0-debug\\res\\values-el\\values-el.xml",

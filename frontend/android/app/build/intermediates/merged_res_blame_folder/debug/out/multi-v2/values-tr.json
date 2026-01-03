@@ -1,7 +1,7 @@
 {
     "logs": [
         {
-            "outputFile": "com.globetrottertemp.app-mergeDebugResources-34:/values-tr/values-tr.xml",
+            "outputFile": "com.globetrotter.app-mergeDebugResources-34:/values-tr/values-tr.xml",
             "map": [
                 {
                     "source": "C:\\Users\\zbuser\\.gradle\\caches\\transforms-3\\b3627ca143232ec2ceb6e319eb18971d\\transformed\\appcompat-1.6.1\\res\\values-tr\\values-tr.xml",
