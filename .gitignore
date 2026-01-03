@@ -16,7 +16,7 @@ env/
 .vscode/
 .idea/
 temp/
-frontend/android/
+
 # Node
 node_modules/
 dist/
