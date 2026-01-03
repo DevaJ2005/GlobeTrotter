@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import {
     View,
     Text,
@@ -8,22 +8,66 @@ import {
     TextInput,
     TouchableOpacity,
     Dimensions,
+    ActivityIndicator,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import LinearGradient from 'react-native-linear-gradient';
 import { Button } from '../components/Button';
 import { Card } from '../components/Card';
 import { Tag } from '../components/Tag';
-import { regionalDestinations, previousTrips } from '../data/mockData';
 import { colors, spacing, typography, borderRadius } from '../theme';
+import { useAuth } from '../context/AuthContext';
+import { tripService } from '../api/trips';
+import { client } from '../api/client';
 
 interface DashboardScreenProps {
-    onNavigate: (screen: string) => void;
+    onNavigate: (screen: string, params?: any) => void;
 }
 
 const { width } = Dimensions.get('window');
 
 export const DashboardScreen: React.FC<DashboardScreenProps> = ({ onNavigate }) => {
+    const { user } = useAuth();
+    const [stats, setStats] = useState<any>(null);
+    const [recentTrips, setRecentTrips] = useState<any[]>([]);
+    const [regionalDestinations, setRegionalDestinations] = useState<any[]>([]);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        const fetchData = async () => {
+            try {
+                // Parallel fetching
+                const [tripsRes, regionsRes] = await Promise.all([
+                    tripService.getAllTrips(),
+                    client.get('/destinations/regional')
+                ]);
+
+                // Assuming tripsRes contains all trips, filter/sort locally or use backend query
+                // For now, take first 3 real trips or empty if data format differs
+                setRecentTrips(Array.isArray(tripsRes) ? tripsRes.slice(0, 3) : []);
+                setRegionalDestinations(Array.isArray(regionsRes.data) ? regionsRes.data : []);
+
+                // If user object doesn't have stats, we might need a separate call
+                // setStats(user?.stats); 
+
+            } catch (error) {
+                console.error("Dashboard fetch error", error);
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchData();
+    }, []);
+
+    if (loading) {
+        return (
+            <View style={[styles.container, styles.center]}>
+                <ActivityIndicator size="large" color={colors.oceanBlue} />
+            </View>
+        );
+    }
+
     return (
         <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
             <View style={styles.hero}>
@@ -72,7 +116,7 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({ onNavigate }) 
                     </TouchableOpacity>
                 </View>
                 <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.horizontalScroll}>
-                    {regionalDestinations.map((dest) => (
+                    {regionalDestinations.map((dest: any) => (
                         <TouchableOpacity
                             key={dest.id}
                             style={styles.destinationCard}
@@ -86,32 +130,40 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({ onNavigate }) 
                             <Text style={styles.destinationName}>{dest.name}</Text>
                         </TouchableOpacity>
                     ))}
+                    {regionalDestinations.length === 0 && (
+                        <Text style={{ marginLeft: spacing.md, color: colors.textSecondary }}>No destinations found.</Text>
+                    )}
                 </ScrollView>
             </View>
 
             <View style={styles.section}>
                 <View style={styles.sectionHeader}>
-                    <Text style={styles.sectionTitle}>Previous Trips</Text>
+                    <Text style={styles.sectionTitle}>Your Recent Trips</Text>
                     <TouchableOpacity onPress={() => onNavigate('myTrips')}>
                         <Text style={styles.sectionLink}>See All</Text>
                     </TouchableOpacity>
                 </View>
-                {previousTrips.map((trip) => (
-                    <Card key={trip.id} onPress={() => onNavigate('itinerary')} style={styles.tripCard}>
+                {recentTrips.map((trip: any) => (
+                    <Card key={trip.id} onPress={() => onNavigate('itinerary', { tripId: trip.id, tripName: trip.title })} style={styles.tripCard}>
                         <View style={styles.tripRow}>
                             <Image source={{ uri: trip.image }} style={styles.tripImage} />
                             <View style={styles.tripInfo}>
                                 <Text style={styles.tripTitle}>{trip.title}</Text>
                                 <View style={styles.tripMeta}>
                                     <Icon name="calendar-blank" size={14} color={colors.textSecondary} style={styles.tripIcon} />
-                                    <Text style={styles.tripDates}>{trip.dates}</Text>
+                                    <Text style={styles.tripDates}>
+                                        {trip.startDate} - {trip.endDate}
+                                    </Text>
                                 </View>
-                                <Tag color="sand">{trip.status}</Tag>
+                                <Tag color="sand">{trip.status || 'Planned'}</Tag>
                             </View>
                             <Icon name="chevron-right" size={24} color={colors.oceanBlue} />
                         </View>
                     </Card>
                 ))}
+                {recentTrips.length === 0 && (
+                    <Text style={{ marginLeft: spacing.md, color: colors.textSecondary }}>No trips found. Plan one now!</Text>
+                )}
             </View>
 
             <View style={styles.ctaSection}>
@@ -127,6 +179,10 @@ const styles = StyleSheet.create({
     container: {
         flex: 1,
         backgroundColor: colors.travelBg,
+    },
+    center: {
+        justifyContent: 'center',
+        alignItems: 'center',
     },
     hero: {
         height: 280,

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import { StatusBar, View, Text, StyleSheet, TouchableOpacity, Platform, BackHandler } from 'react-native';
 import { colors } from './src/theme';
+import { AuthProvider, useAuth } from './src/context/AuthContext';
 
 // Screens
 import {
@@ -34,17 +35,25 @@ type Screen =
     | 'analytics';
 
 // Simple navigation implementation (no external nav library required for basic demo)
-const App = () => {
+// Simple navigation implementation (no external nav library required for basic demo)
+const MainApp = () => {
+    const { user, isLoading } = useAuth();
     const [currentScreen, setCurrentScreen] = useState<Screen>('login');
-    const [isAuthenticated, setIsAuthenticated] = useState(false);
     const [history, setHistory] = useState<Screen[]>([]);
+    const [params, setParams] = useState<any>(null);
 
-    const handleNavigate = (screen: string) => {
-        if (screen === 'dashboard' || screen === 'register') {
-            setIsAuthenticated(true);
+    useEffect(() => {
+        if (!isLoading) {
+            setCurrentScreen(user ? 'dashboard' : 'login');
         }
+    }, [user, isLoading]);
+
+    const handleNavigate = (screen: string, newParams?: any) => {
         setHistory(prev => [...prev, currentScreen]);
         setCurrentScreen(screen as Screen);
+        if (newParams) {
+            setParams(newParams);
+        }
     };
 
     const handleBack = () => {
@@ -66,12 +75,20 @@ const App = () => {
         return () => backHandler.remove();
     }, [history]);
 
+    if (isLoading) {
+        return (
+            <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+                <Text>Loading...</Text>
+            </View>
+        );
+    }
+
     const renderScreen = () => {
-        const props = { onNavigate: handleNavigate };
+        const props = { onNavigate: handleNavigate, params };
 
         switch (currentScreen) {
             case 'login':
-                return <LoginScreen {...props} />;
+                return user ? <DashboardScreen {...props} /> : <LoginScreen {...props} />;
             case 'register':
                 return <RegisterScreen {...props} />;
             case 'dashboard':
@@ -95,12 +112,12 @@ const App = () => {
             case 'analytics':
                 return <AnalyticsScreen {...props} />;
             default:
-                return <DashboardScreen {...props} />;
+                return user ? <DashboardScreen {...props} /> : <LoginScreen {...props} />;
         }
     };
 
     // Hide bottom nav on certain screens
-    const showBottomNav = isAuthenticated && !['login', 'register', 'createTrip', 'buildItinerary', 'myTrips', 'profile', 'itinerary'].includes(currentScreen);
+    const showBottomNav = user && !['login', 'register', 'createTrip', 'buildItinerary', 'myTrips', 'profile', 'itinerary'].includes(currentScreen);
 
     const navItems = [
         { id: 'dashboard', label: 'Home', icon: 'home-variant' },
@@ -141,6 +158,12 @@ const App = () => {
         </View>
     );
 };
+
+const App = () => (
+    <AuthProvider>
+        <MainApp />
+    </AuthProvider>
+);
 
 const styles = StyleSheet.create({
     container: {

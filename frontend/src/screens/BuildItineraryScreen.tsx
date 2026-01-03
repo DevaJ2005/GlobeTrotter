@@ -1,89 +1,158 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
     View,
     Text,
     StyleSheet,
     ScrollView,
     TouchableOpacity,
+    Alert,
+    Modal,
+    ActivityIndicator
 } from 'react-native';
 import { Header } from '../components/Header';
 import { Input } from '../components/Input';
 import { Button } from '../components/Button';
-import { Tag } from '../components/Tag';
 import { colors, spacing, typography, borderRadius, shadows } from '../theme';
+import { tripService } from '../api/trips';
 
 interface BuildItineraryScreenProps {
-    onNavigate: (screen: string) => void;
+    onNavigate: (screen: string, params?: any) => void;
+    params?: { tripId: number; tripName?: string };
 }
 
-interface Section {
-    id: number;
-    title: string;
-}
+export const BuildItineraryScreen: React.FC<BuildItineraryScreenProps> = ({ onNavigate, params }) => {
+    const [sections, setSections] = useState<any[]>([]);
+    const [loading, setLoading] = useState(true);
+    const [modalVisible, setModalVisible] = useState(false);
 
-export const BuildItineraryScreen: React.FC<BuildItineraryScreenProps> = ({ onNavigate }) => {
-    const [sections, setSections] = useState<Section[]>([
-        { id: 1, title: 'Section 1' },
-        { id: 2, title: 'Section 2' },
-    ]);
+    // Form state
+    const [newTitle, setNewTitle] = useState('');
+    const [newLocation, setNewLocation] = useState('');
+    const [newType, setNewType] = useState('Activity'); // Activity, Dining, Accommodation
+    const [newCost, setNewCost] = useState('');
 
-    const addSection = () => {
-        setSections([...sections, { id: sections.length + 1, title: `Section ${sections.length + 1}` }]);
+    useEffect(() => {
+        // Fetch existing itinerary
+        if (params?.tripId) {
+            fetchItinerary();
+        } else {
+            setLoading(false);
+        }
+    }, [params?.tripId]);
+
+    const fetchItinerary = async () => {
+        try {
+            const data = await tripService.getItinerary(params!.tripId);
+            // Transform API response to our local state which is flat sections for now
+            // Or better, just work with days. But the UI is built for sequential sections.
+            // For now, let's assume we are adding to Day 1 or just pushing to the list.
+            setSections(Array.isArray(data.days) ? data.days.flatMap((d: any) => d.activities) : []);
+        } catch (error) {
+            console.error("Fetch itinerary error", error);
+        } finally {
+            setLoading(false);
+        }
     };
+
+    const handleAddSection = async () => {
+        if (!newTitle || !newLocation) {
+            Alert.alert("Missing Info", "Please enter title and location.");
+            return;
+        }
+
+        try {
+            // Add activity to Day 1 (hardcoded for simplicity in this MVP flow)
+            await tripService.addActivity(params!.tripId, 1, {
+                title: newTitle,
+                location: newLocation,
+                type: newType,
+                cost: parseFloat(newCost) || 0,
+                startTime: '09:00',
+                endTime: '10:00',
+                notes: ''
+            });
+
+            setNewTitle('');
+            setNewLocation('');
+            setNewCost('');
+            setModalVisible(false);
+            fetchItinerary(); // Refresh
+        } catch (error) {
+            console.error("Add activity error", error);
+            Alert.alert("Error", "Failed to add activity.");
+        }
+    };
+
+    if (loading) {
+        return (
+            <View style={[styles.container, styles.center]}>
+                <ActivityIndicator size="large" color={colors.oceanBlue} />
+            </View>
+        );
+    }
 
     return (
         <View style={styles.container}>
-            <Header title="Build Your Itinerary" showBack onBack={() => onNavigate('createTrip')} />
+            <Header
+                title={params?.tripName ? `Itinerary: ${params.tripName}` : "Build Itinerary"}
+                showBack
+                onBack={() => onNavigate(params?.tripId ? 'itinerary' : 'createTrip', { tripId: params?.tripId })}
+            />
+
             <ScrollView contentContainerStyle={styles.content}>
-                <Text style={styles.description}>
-                    Create stops for your journey. Each section represents a destination or activity.
-                </Text>
-
-
-                {sections.map((section, index) => (
-                    <View key={section.id} style={styles.sectionCard}>
-                        <View style={styles.sectionHeader}>
-                            <Text style={styles.sectionTitle}>Stop {index + 1}</Text>
-                            <Tag color="sand">Day {index + 1}</Tag>
-                        </View>
-
-                        <Input label="Location / Activity" placeholder="e.g., Eiffel Tower, Louvre Museum" />
-
-                        <View style={styles.row}>
-                            <View style={styles.halfInput}>
-                                <Text style={styles.label}>📅 Start Date</Text>
-                                <Input placeholder="YYYY-MM-DD" />
-                            </View>
-                            <View style={styles.halfInput}>
-                                <Text style={styles.label}>📅 End Date</Text>
-                                <Input placeholder="YYYY-MM-DD" />
-                            </View>
-                        </View>
-
-                        <Text style={styles.label}>💵 Budget (USD)</Text>
-                        <Input placeholder="500" keyboardType="numeric" />
-
-                        <Input label="Notes" placeholder="Additional details..." />
+                {sections.length === 0 ? (
+                    <View style={styles.emptyState}>
+                        <Text style={styles.emptyText}>Start adding activities to your trip!</Text>
                     </View>
-                ))}
+                ) : (
+                    sections.map((section, index) => (
+                        <View key={index} style={styles.sectionCard}>
+                            <View style={styles.sectionHeader}>
+                                <Text style={styles.sectionTitle}>{section.title || section.name}</Text>
+                                <View style={styles.badge}>
+                                    <Text style={styles.badgeText}>{section.type}</Text>
+                                </View>
+                            </View>
+                            <Text style={styles.sectionText}>📍 {section.location}</Text>
+                            <Text style={styles.sectionText}>💰 ${section.totalCost || section.cost || 0}</Text>
+                        </View>
+                    ))
+                )}
 
-
-                <TouchableOpacity style={styles.addButton} onPress={addSection}>
-                    <Text style={styles.addIcon}>➕</Text>
-                    <Text style={styles.addText}>Add Another Section</Text>
+                <TouchableOpacity style={styles.addButton} onPress={() => setModalVisible(true)}>
+                    <Text style={styles.addButtonText}>+ Add Activity</Text>
                 </TouchableOpacity>
 
-
-                <View style={styles.actions}>
-                    <Button variant="primary" fullWidth size="lg" onPress={() => onNavigate('myTrips')}>
-                        Save Itinerary
+                {sections.length > 0 && (
+                    <Button variant="sunset" onPress={() => onNavigate('itinerary', { tripId: params?.tripId })}>
+                        View Full Itinerary
                     </Button>
-                    <View style={styles.spacer} />
-                    <Button variant="outline" fullWidth size="lg" onPress={() => onNavigate('itinerary')}>
-                        Preview Itinerary
-                    </Button>
-                </View>
+                )}
             </ScrollView>
+
+            <Modal visible={modalVisible} transparent animationType="slide">
+                <View style={styles.modalOverlay}>
+                    <View style={styles.modalContent}>
+                        <Text style={styles.modalTitle}>New Activity</Text>
+
+                        <View style={styles.inputSpacing}>
+                            <Input label="Title" value={newTitle} onChangeText={setNewTitle} placeholder="e.g. Visit Louvre" />
+                        </View>
+                        <View style={styles.inputSpacing}>
+                            <Input label="Location" value={newLocation} onChangeText={setNewLocation} placeholder="e.g. Paris" />
+                        </View>
+                        <View style={styles.inputSpacing}>
+                            <Input label="Cost" value={newCost} onChangeText={setNewCost} placeholder="0.00" keyboardType="numeric" />
+                        </View>
+
+                        <View style={styles.modalActions}>
+                            <Button variant="outline" onPress={() => setModalVisible(false)}>Cancel</Button>
+                            <View style={{ width: 16 }} />
+                            <Button variant="primary" onPress={handleAddSection}>Add</Button>
+                        </View>
+                    </View>
+                </View>
+            </Modal>
         </View>
     );
 };
@@ -93,11 +162,20 @@ const styles = StyleSheet.create({
         flex: 1,
         backgroundColor: colors.travelBg,
     },
+    center: {
+        justifyContent: 'center',
+        alignItems: 'center',
+        flex: 1,
+    },
     content: {
         padding: spacing.lg,
         paddingBottom: spacing.xxl * 2,
     },
-    description: {
+    emptyState: {
+        alignItems: 'center',
+        padding: spacing.xl,
+    },
+    emptyText: {
         ...typography.body,
         color: colors.textSecondary,
         marginBottom: spacing.lg,
@@ -122,19 +200,20 @@ const styles = StyleSheet.create({
         ...typography.h3,
         color: colors.oceanDark,
     },
-    row: {
-        flexDirection: 'row',
-        marginHorizontal: -spacing.xs,
-    },
-    halfInput: {
-        flex: 1,
-        paddingHorizontal: spacing.xs,
-    },
-    label: {
+    sectionText: {
         ...typography.body,
         color: colors.text,
         marginBottom: spacing.xs,
-        fontWeight: '500',
+    },
+    badge: {
+        backgroundColor: colors.oceanLight,
+        paddingHorizontal: spacing.sm,
+        paddingVertical: 4,
+        borderRadius: borderRadius.full,
+    },
+    badgeText: {
+        ...typography.caption,
+        color: colors.oceanDark,
     },
     addButton: {
         flexDirection: 'row',
@@ -148,19 +227,34 @@ const styles = StyleSheet.create({
         borderColor: colors.oceanLight,
         marginBottom: spacing.lg,
     },
-    addIcon: {
-        fontSize: 20,
-        marginRight: spacing.sm,
-        color: colors.oceanBlue,
-    },
-    addText: {
+    addButtonText: {
         ...typography.body,
         color: colors.oceanBlue,
+        fontWeight: '600',
     },
-    actions: {
-        marginTop: spacing.md,
+    modalOverlay: {
+        flex: 1,
+        backgroundColor: 'rgba(0,0,0,0.5)',
+        justifyContent: 'center',
+        padding: spacing.lg,
     },
-    spacer: {
-        height: spacing.sm,
+    modalContent: {
+        backgroundColor: colors.white,
+        borderRadius: borderRadius.lg,
+        padding: spacing.lg,
+        ...shadows.xl,
+    },
+    modalTitle: {
+        ...typography.h2,
+        color: colors.oceanDark,
+        marginBottom: spacing.lg,
+    },
+    modalActions: {
+        flexDirection: 'row',
+        justifyContent: 'flex-end',
+        marginTop: spacing.lg,
+    },
+    inputSpacing: {
+        marginBottom: spacing.md,
     },
 });

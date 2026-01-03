@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import {
     View,
     Text,
@@ -6,71 +6,82 @@ import {
     ScrollView,
     Image,
     TouchableOpacity,
+    ActivityIndicator,
+    Alert,
 } from 'react-native';
 import { Header } from '../components/Header';
 import { Card } from '../components/Card';
-import { Tag } from '../components/Tag';
 import { colors, spacing, typography, borderRadius, shadows } from '../theme';
+import { communityService } from '../api/community';
 
 interface CommunityScreenProps {
     onNavigate: (screen: string) => void;
 }
 
-const communityPosts = [
-    {
-        id: 1,
-        user: { name: 'Sarah Miller', avatar: '👩' },
-        location: 'Santorini, Greece',
-        image: 'https://images.unsplash.com/photo-1672841828482-45faa4c70e50?w=400',
-        caption: 'Sunset views that take your breath away! 🌅',
-        likes: 234,
-        comments: 42,
-        timeAgo: '2h ago',
-    },
-    {
-        id: 2,
-        user: { name: 'John Davis', avatar: '👨' },
-        location: 'Tokyo, Japan',
-        image: 'https://images.unsplash.com/photo-1684613998803-83fe7787db15?w=400',
-        caption: 'Found this amazing temple in Kyoto! The architecture is incredible 🏯',
-        likes: 189,
-        comments: 28,
-        timeAgo: '5h ago',
-    },
-    {
-        id: 3,
-        user: { name: 'Emma Wilson', avatar: '👩‍🦰' },
-        location: 'Swiss Alps',
-        image: 'https://images.unsplash.com/photo-1631684181713-e697596d2165?w=400',
-        caption: 'Mountain adventures at their finest! ⛰️',
-        likes: 312,
-        comments: 56,
-        timeAgo: '1d ago',
-    },
-];
-
 export const CommunityScreen: React.FC<CommunityScreenProps> = ({ onNavigate }) => {
+    const [posts, setPosts] = useState<any[]>([]);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        fetchFeed();
+    }, []);
+
+    const fetchFeed = async () => {
+        try {
+            const data = await communityService.getFeed();
+            setPosts(Array.isArray(data) ? data : []);
+        } catch (error) {
+            console.error("Fetch feed error", error);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleLike = async (postId: number) => {
+        try {
+            await communityService.likePost(postId);
+            // Optimistic update
+            setPosts(posts.map(p =>
+                p.id === postId ? { ...p, likes: p.likes + 1 } : p
+            ));
+        } catch (error) {
+            console.error("Like error", error);
+        }
+    };
+
+    if (loading) {
+        return (
+            <View style={[styles.container, styles.center]}>
+                <ActivityIndicator size="large" color={colors.oceanBlue} />
+            </View>
+        );
+    }
+
     return (
         <View style={styles.container}>
             <Header title="Community Feed" />
             <ScrollView contentContainerStyle={styles.content}>
-                {communityPosts.map((post) => (
+                {posts.map((post) => (
                     <Card key={post.id} style={styles.postCard}>
 
                         <View style={styles.postHeader}>
                             <View style={styles.userInfo}>
                                 <View style={styles.avatar}>
-                                    <Text style={styles.avatarEmoji}>{post.user.avatar}</Text>
+                                    {post.user?.avatar ? (
+                                        <Image source={{ uri: post.user.avatar }} style={{ width: 44, height: 44, borderRadius: 22 }} />
+                                    ) : (
+                                        <Text style={styles.avatarEmoji}>👤</Text>
+                                    )}
                                 </View>
                                 <View>
-                                    <Text style={styles.userName}>{post.user.name}</Text>
+                                    <Text style={styles.userName}>{post.user?.name || 'Unknown'}</Text>
                                     <View style={styles.locationRow}>
                                         <Text style={styles.locationIcon}>📍</Text>
                                         <Text style={styles.locationText}>{post.location}</Text>
                                     </View>
                                 </View>
                             </View>
-                            <Text style={styles.timeAgo}>{post.timeAgo}</Text>
+                            <Text style={styles.timeAgo}>Just now</Text>
                         </View>
 
 
@@ -79,13 +90,13 @@ export const CommunityScreen: React.FC<CommunityScreenProps> = ({ onNavigate }) 
 
                         <View style={styles.actions}>
                             <View style={styles.actionRow}>
-                                <TouchableOpacity style={styles.actionButton}>
+                                <TouchableOpacity style={styles.actionButton} onPress={() => handleLike(post.id)}>
                                     <Text style={styles.actionIcon}>❤️</Text>
                                     <Text style={styles.actionCount}>{post.likes}</Text>
                                 </TouchableOpacity>
                                 <TouchableOpacity style={styles.actionButton}>
                                     <Text style={styles.actionIcon}>💬</Text>
-                                    <Text style={styles.actionCount}>{post.comments}</Text>
+                                    <Text style={styles.actionCount}>{post.comments || 0}</Text>
                                 </TouchableOpacity>
                                 <TouchableOpacity style={styles.actionButton}>
                                     <Text style={styles.actionIcon}>🔗</Text>
@@ -109,6 +120,11 @@ const styles = StyleSheet.create({
     container: {
         flex: 1,
         backgroundColor: colors.travelBg,
+    },
+    center: {
+        justifyContent: 'center',
+        alignItems: 'center',
+        flex: 1,
     },
     content: {
         padding: spacing.md,
